@@ -25,6 +25,10 @@ pub trait StorageConfig: Send + Sync + std::fmt::Debug {
 
     /// Clone this config into a boxed trait object.
     fn clone_box(&self) -> Box<dyn StorageConfig>;
+
+    /// Return a reference to `self` as `&dyn Any`, enabling downcasting to the
+    /// concrete config type in backend factories that need type-specific fields.
+    fn as_any(&self) -> &dyn std::any::Any;
 }
 
 impl Clone for Box<dyn StorageConfig> {
