@@ -69,15 +69,24 @@ pub fn run(args: &ServeArgs) -> anyhow::Result<()> {
 
     // Check backend is supported by this build
     let backend = &app_config.storage._backend;
-    #[cfg(not(feature = "postgres"))]
-    if backend == "postgres" {
-        anyhow::bail!("PostgreSQL backend not enabled. Rebuild with --features postgres");
-    }
-    #[cfg(feature = "postgres")]
-    if backend != "postgres" {
+    #[allow(clippy::vec_init_then_push)] // cfg-guarded pushes cannot use vec![]
+    let supported: Vec<&str> = {
+        let mut v: Vec<&str> = Vec::new();
+        #[cfg(feature = "postgres")]
+        v.push("postgres");
+        #[cfg(feature = "dynamodb")]
+        v.push("dynamodb");
+        v
+    };
+    if !supported.contains(&backend.as_str()) {
         anyhow::bail!(
-            "Unknown backend '{}'. This build only supports 'postgres'.",
-            backend
+            "Backend '{}' is not enabled in this build. Supported backends: {}",
+            backend,
+            if supported.is_empty() {
+                "(none)".to_string()
+            } else {
+                supported.join(", ")
+            },
         );
     }
 
